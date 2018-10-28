@@ -2,7 +2,7 @@ const http = require('http');
 const net = require('net');
 const hostname = '127.0.0.1';
 const port = 3000;
-let client = new net.Socket();
+let  client = new net.Socket();
 
 const handlers = {
     '/workers': getWorkers,
@@ -10,43 +10,71 @@ const handlers = {
     '/workers/remove': removeWorker
 };
 
+const server = http.createServer((req, res) => {
+    try {
+        parseBodyJson(req, (err, payload) => {
+            const handler = getHandler(req.url);
+            handler(req, res, payload, (err, result) => {
+                if (err) {
+                    res.statusCode = err.code;
+                    res.end(JSON.stringify(err));
+                    return;
+                }else{
+                    res.statusCode = 200;
+                    res.end(result);
+                }
+            });
+        });
+    }catch (e) {
+        console.log(e);
+    }
+});
+
+server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+});
+
 function getHandler(url) {
     return handlers[url] || notFound;
 }
 
 function notFound(req, res, payload, cb) {
-    cb({code: 404, message: 'Not found'});
+    cb({ code: 404, message: 'Not found'});
 }
 
 function parseBodyJson(req, cb) {
     let body = [];
-    req.on('data', function (chunk) {
+    req.on('data', function(chunk) {
         body.push(chunk);
-    }).on('end', function () {
+    }).on('end', function() {
         let params = '';
         body = Buffer.concat(body).toString();
-        if(body !== ""){
+        if (body !== ""){
             params = JSON.parse(body);
         }
         cb(null, params);
     });
 }
 
-function maketFunc(req, res, payload, cb, message) {
+client.connect(8003, function () {
+    console.log('Connected to the TCP server');
+});
+
+function maketFunc(req, res, payload, cb, message){
     client.write(JSON.stringify(message));
-    client.on('data', (data) => {
-        cb(null, data || []);
+    client.on('data', (data)=>{
+        cb(null, data ||[]);
     });
 }
 
-function getWorkers(req, res, payload, cb) {
-    maketFunc(rq, res, payload, cb, {act: "GET"});
+function getWorkers(req, res, payload, cb){
+    maketFunc(req, res, payload, cb, {act: "GET"});
 }
 
-function addWorkers(req, res, payload, cb) {
-    maketFunc(rq, res, payload, cb, {act: "CREATE", X: payload.X});
+function addWorker(req, res, payload, cb) {
+    maketFunc(req, res, payload, cb, {act: "CREATE", X: payload.X});
 }
 
-function removeWorkers(req, res, payload, cb) {
-    maketFunc(rq, res, payload, cb, {act: "STOP", id: payload.id});
+async function removeWorker(req, res, payload, cb){
+    maketFunc(req, res, payload, cb, {act: "STOP", id: payload.id});
 }
