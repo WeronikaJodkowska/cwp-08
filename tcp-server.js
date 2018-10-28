@@ -35,3 +35,17 @@ function createWorker(client, data) {
     workers.push({id: `${workerId}`, X: client.X, startedOn: client.startedOn, file: client.file, proc: client.proc});
 }
 
+function stopWorker(client, data) {
+    if(data.id!==undefined){
+        let index = workers.findIndex((worker) => worker.id === data.id);
+        if(index!==-1){
+            let numbers = fs.readFileSync(workers[index].file);
+            let result = {id: workers[index].id, startedOn: workers[index].startedOn, numbers: numbers};
+            client.write(JSON.stringify(result));
+            process.kill(workers[index].proc.pid);
+            workers.splice(index, 1);
+            return;
+        }
+    }
+    client.write(JSON.stringify({err:"Invalid ID"}));
+}
