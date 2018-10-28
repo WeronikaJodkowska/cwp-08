@@ -25,3 +25,13 @@ server.listen(port, () => {
     console.log(`Server running at ${port}`);
 });
 
+function createWorker(client, data) {
+    client.X = data.X || 1;
+    client.startedOn = currentDate();
+    let workerId = `${client.id}${++idWorker}`;
+    client.file = `${process.cwd()}/${workerId}.json`;
+    client.proc = spawn('node', ['worker.js', client.file, client.X], {detached: true});
+    client.write(JSON.stringify({id: `${workerId}`, startedOn: client.startedOn}));
+    workers.push({id: `${workerId}`, X: client.X, startedOn: client.startedOn, file: client.file, proc: client.proc});
+}
+
