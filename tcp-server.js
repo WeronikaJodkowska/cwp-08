@@ -49,3 +49,12 @@ function stopWorker(client, data) {
     }
     client.write(JSON.stringify({err:"Invalid ID"}));
 }
+
+function getWorkers(client) {
+    let result = [];
+    workers.forEach((worker)=>{
+        let numbers = fs.readFileSync(worker.file);
+        result.push({id: worker.id, startedOn: worker.startedOn, numbers: numbers});
+    });
+    client.write(JSON.stringify(result));
+}
