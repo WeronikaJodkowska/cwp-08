@@ -10,6 +10,28 @@ const handlers = {
     '/workers/remove': removeWorker
 };
 
+function getHandler(url) {
+    return handlers[url] || notFound;
+}
+
+function notFound(req, res, payload, cb) {
+    cb({code: 404, message: 'Not found'});
+}
+
+function parseBodyJson(req, cb) {
+    let body = [];
+    req.on('data', function (chunk) {
+        body.push(chunk);
+    }).on('end', function () {
+        let params = '';
+        body = Buffer.concat(body).toString();
+        if(body !== ""){
+            params = JSON.parse(body);
+        }
+        cb(null, params);
+    });
+}
+
 function maketFunc(req, res, payload, cb, message) {
     client.write(JSON.stringify(message));
     client.on('data', (data) => {
