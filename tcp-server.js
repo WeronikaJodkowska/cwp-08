@@ -58,3 +58,8 @@ function getWorkers(client) {
     });
     client.write(JSON.stringify(result));
 }
+
+function currentDate() {
+    const date = new Date();
+    return `${date.getFullYear()}.${date.getMonth()}.${date.getDay()}`;
+}
